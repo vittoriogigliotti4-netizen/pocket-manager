@@ -36,14 +36,22 @@ supabase = init_connection()
 
 def carica_dati():
     response = supabase.table("app_data").select("dati").eq("id", 1).execute()
+    
+    # Se il database è completamente vuoto (nessun dato restituito)
+    if len(response.data) == 0:
+        return DEFAULT_DATA
+        
     dati_db = response.data[0]['dati']
-    # Se il database è appena stato inizializzato (JSON vuoto '{}'), usiamo i default
+    
+    # Se la riga esiste ma il JSON è vuoto '{}'
     if not dati_db:
         return DEFAULT_DATA
+        
     return dati_db
 
 def salva_dati(dati_aggiornati):
-    supabase.table("app_data").update({"dati": dati_aggiornati}).eq("id", 1).execute()
+    # 'upsert' è magico: se l'ID 1 non esiste lo crea, se esiste lo aggiorna!
+    supabase.table("app_data").upsert({"id": 1, "dati": dati_aggiornati}).execute()
 
 dati = carica_dati()
 
